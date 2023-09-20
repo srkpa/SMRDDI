@@ -1,0 +1,13 @@
+{
+    "batch_size": 256,
+    "data_file": "/home/srkpa/scratch/BADDI/data/random/drugbank.csv",
+    "dataset_name": "drugbank",
+    "debug": false,
+    "drugs_file": null,
+    "max_epochs": 100,
+    "min_count": 0,
+    "num_rounds": 1,
+    "test_size": 0.2,
+    "transform": "SmilesToSeq",
+    "valid_size": 0.2
+}

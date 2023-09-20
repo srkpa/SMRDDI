@@ -1,0 +1,2 @@
+Cython
+numpy>=1.16.4

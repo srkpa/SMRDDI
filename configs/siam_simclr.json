@@ -1,0 +1,16 @@
+{
+  "data_file": "/home/srkpa/scratch/BADDI/data/chem_random/drugbank.csv",
+  "dataset_name": "drugbank",
+  "debug": false,
+  "drugs_file": null,
+  "embedding_smiles": "/home/srkpa/scratch/BADDI/data/drugbank_smiles.csv",
+  "embedding": "/home/srkpa/scratch/tube/simclr/version_4_b256/predictions.pt",
+  "min_count": 0,
+  "num_rounds": 1,
+  "transform": null,
+  "batch_size": 256,
+  "max_epochs": 200,
+  "test_size": 0.2,
+  "valid_size": 0.2,
+  "base_network": "identity"
+}

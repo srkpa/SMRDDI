@@ -1,0 +1,18 @@
+{
+  "drugs_file": "/home/srkpa/scratch/BADDI/data/pcba.csv",
+  "data_file": null,
+  "dataset_name": "pcba",
+  "use_randomize_smiles": false,
+  "use_contrastive_transform": true,
+  "transform": "SmilesToSeq",
+  "target_transform": null,
+  "min_count": 0,
+  "num_round": 1,
+  "debug": false,
+  "batch_size": 256,
+  "max_epochs": 300,
+  "test_size": 0.2,
+  "valid_size": 0.2,
+  "splitter": "MaxMinSplitter",
+  "pred_file": "/home/srkpa/scratch/BADDI/data/drugbank_smiles.csv"
+}

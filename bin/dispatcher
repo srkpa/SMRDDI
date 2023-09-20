@@ -1,0 +1,112 @@
+import hashlib
+import importlib.util
+import json
+import os
+import shutil
+import subprocess
+import tempfile
+
+import click
+from sklearn.model_selection import ParameterGrid
+
+
+@click.group()
+def cli():
+    pass
+
+
+@cli.command()
+@click.option('--exp_name', '-e', type=str)
+@click.option('--config_file', '-c', type=str, default='train_baseline_no_rand.py')
+@click.option('--output_path', '-o',
+              help="Location for saving the training results (model artifacts and output files).")
+def config(exp_name, output_path, config_file):
+    cwd = os.getcwd()
+    config_file = '%s/%s/%s' % (os.path.dirname(cwd), 'configs', config_file)
+    spec = importlib.util.spec_from_file_location("config", config_file)
+    config_module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(config_module)
+    task_config = config_module.expt_config
+    task_grid = list(ParameterGrid(task_config))
+    task_grid = {
+        hashlib.sha1(json.dumps(task, sort_keys=True).encode()).hexdigest(): task
+        for task in task_grid
+    }
+    print(f"- Experiment has {len(task_grid)} different tasks:")
+    exp_dir = os.path.join(os.path.expanduser('~'), output_path, exp_name, 'configs')
+    os.makedirs(exp_dir, exist_ok=True)
+    with open(f"{exp_dir}/configs.txt", "w") as cf:
+        for task_id in task_grid:
+            temp_file = tempfile.NamedTemporaryFile(mode='w')
+            with open(temp_file.name, 'w') as f:
+                json.dump(task_grid[task_id], f)
+            shutil.copy(temp_file.name, f"{exp_dir}/{task_id}.json")
+            assert os.path.exists(f"{exp_dir}/{task_id}.json")
+            temp_file.close()
+            cf.write(f"{exp_dir}/{task_id}.json\n")
+
+
+@cli.command()
+@click.option('--exec_file', '-x', type=str, default="train")
+@click.option('--exp_name', '-e', type=str, help="Unique name for the experiment.")
+@click.option('--hpid', '-p', type=int, default=0, help="""Position of the config file to run""")
+@click.option('--output_path', '-o',
+              help="Location for saving the training results (model artifacts and output files).")
+def run(exp_name, output_path, hpid, exec_file):
+    _run(exp_name, output_path, hpid, exec_file)
+
+
+def _run(exp_name, output_path, hpid, exec_file):
+    exp_dir = os.path.join(os.path.expanduser('~'), output_path, exp_name)
+    all_filenames_location = os.path.join(exp_dir, 'configs', 'configs.txt')
+    with open(all_filenames_location, 'r') as fd:
+        config_file = fd.readlines()[hpid].rstrip()
+    print(f"{exec_file} -p {config_file} -o {exp_dir} ")
+    process = subprocess.Popen(f"{exec_file} -p {config_file} -o {exp_dir}",
+                               shell=True)
+    process.communicate()
+    if process.returncode != 0:
+        exit()
+    os.rename(config_file, config_file.replace('.json', '.done'))
+
+
+@cli.command()
+@click.option('--exp_name', '-e', type=str, default='test', help="Unique name for the experiment.")
+@click.option('--output_path', '-o',
+              help="Location for saving the training results (model artifacts and output files).")
+def dispatch(output_path, exp_name):
+    config_dir = os.path.join(os.path.expanduser('~'), output_path, exp_name, 'configs')
+    os.makedirs(config_dir, exist_ok=True)
+
+    existing_exp_files = [os.path.splitext(f) for f in os.listdir(config_dir)]
+    print(f"- Experiment has {len(existing_exp_files)} different tasks:")
+
+    done_task_ids = [
+        task_id for task_id, ext in existing_exp_files
+        if (ext == '.done')
+    ]
+    planned_task_ids = [
+        task_id for task_id, ext in existing_exp_files if
+        (ext == '.json')
+    ]
+
+    if planned_task_ids:
+        print('\nPlanned:', *planned_task_ids, sep='\n')
+    if done_task_ids:
+        print('\nCompleted:', *done_task_ids, sep='\n')
+
+    print(f"*Planned: {len(planned_task_ids)}\n"
+          f"*Completed: {len(done_task_ids)}\n")
+
+    tasks = planned_task_ids
+
+    for i, task_id in enumerate(tasks):
+        try:
+            _run(exp_name=exp_name, output_path=output_path, hpid=i,
+                 exec_file='train')
+        except:
+            pass
+
+
+if __name__ == '__main__':
+    cli()

@@ -1,0 +1,16 @@
+{
+    "base_network": "identity",
+    "batch_size": 256,
+    "data_file": "/home/srkpa/scratch/BADDI/data/random/drugbank.csv",
+    "dataset_name": "drugbank",
+    "debug": false,
+    "drugs_file": null,
+    "embedding": null,
+    "embedding_smiles": null,
+    "max_epochs": 2,
+    "min_count": 0,
+    "num_rounds": 1,
+    "test_size": 0.2,
+    "transform": "MACCSKeysFingerprint",
+    "valid_size": 0.2
+}
